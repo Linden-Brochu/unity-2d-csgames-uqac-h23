@@ -1,41 +1,47 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Enemy : MonoBehaviour
 {
-    public float movementSpeed = 1000.0f;
-    new Rigidbody2D rb;
+    [SerializeField] public float movementSpeed = 10.0f;
 
-    [SerializeField] Rigidbody2D thePlayer;
+    [SerializeField] Transform thePlayer;
+    private Transform[] waypoints;
+    [SerializeField] private GameObject GameObjectWithWaypoints;
+
+    private int currentWaypointIndex = 0;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        //Recupere les waypoints sans inclure l'objet de la liste
+        waypoints = GameObjectWithWaypoints.GetComponentsInChildren<Transform>().Where(test=>test!=GameObjectWithWaypoints.transform).ToArray();
 
-        GetComponent<Rigidbody2D>().isKinematic = false;
-        GetComponent<Rigidbody2D>().angularDrag = 0.0f;
-        GetComponent<Rigidbody2D>().gravityScale = 0.0f;
+        //Start at first waypoint
+        transform.position = waypoints[0].position;
+        //Debug.Log(transform.position);
     }
 
 
     //Patrouille
 
 
-    // Deplacement de mon ennemi (from PlayerController)
-    void Move(Vector2 targetVelocity)
+    void Move(Vector2 targetPos)
     {
-        // Set rigidbody velocity
-        rb.velocity = (targetVelocity * movementSpeed) * Time.deltaTime; // Multiply the target by deltaTime to make movement speed consistent across different framerates
-
-        //_anim.SetFloat("velocity_x", targetVelocity.x);
-        //_anim.SetFloat("velocity_y", targetVelocity.y);
+        transform.position = Vector2.MoveTowards(transform.position, targetPos, Time.deltaTime * movementSpeed); 
     }
 
-    Vector2 GetDirectionToObject(Rigidbody2D other)
+    void followWaypoints()
     {
-        Vector2 directionToObject = other.position - rb.position;
-        return directionToObject;
+        Vector3 waypointPos = waypoints[currentWaypointIndex].position;
+        if (Vector2.Distance(waypointPos, transform.position) < .1f)
+        {
+            currentWaypointIndex = (currentWaypointIndex+1) % waypoints.Length;
+            //Debug.Log(currentWaypointIndex);
+        }
+
+        Move(waypointPos);
     }
 
 
@@ -44,8 +50,8 @@ public class Enemy : MonoBehaviour
     void Update()
     {
         //Niveau 1: suivi d'une trajectoire
-
+        followWaypoints();
         //Niveau 3
-        //Move(GetDirectionToPlayer(thePlayer));
+        //Move(thePlayer.position);
     }
 }
