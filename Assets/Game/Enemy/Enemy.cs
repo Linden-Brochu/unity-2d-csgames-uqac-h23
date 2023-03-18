@@ -5,11 +5,16 @@ using System.Linq;
 
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] public float movementSpeed = 10.0f;
+    [SerializeField] public float movementSpeed;
 
     [SerializeField] Transform thePlayer;
+
     private Transform[] waypoints;
     [SerializeField] private GameObject GameObjectWithWaypoints;
+
+    private float fieldOfViewRadius;
+
+    [SerializeField] private GameObject fieldOfViewCircle;
 
     private int currentWaypointIndex = 0;
 
@@ -20,7 +25,8 @@ public class Enemy : MonoBehaviour
 
         //Start at first waypoint
         transform.position = waypoints[0].position;
-        //Debug.Log(transform.position);
+
+        fieldOfViewRadius = fieldOfViewCircle.transform.localScale[0] / 2;
     }
 
 
@@ -50,7 +56,17 @@ public class Enemy : MonoBehaviour
     void Update()
     {
         //Niveau 1: suivi d'une trajectoire
-        followWaypoints();
+        //followWaypoints();
+        //Niveau 2: Detection joueur
+        if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
+        {
+            Move(thePlayer.position);
+        }
+        else
+        {
+            followWaypoints();
+        }
+
         //Niveau 3
         //Move(thePlayer.position);
     }
