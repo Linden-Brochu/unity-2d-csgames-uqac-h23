@@ -40,6 +40,7 @@ public class Enemy : MonoBehaviour
 
     void followWaypoints()
     {
+        Debug.Log("Patrolling");
         Vector3 waypointPos = waypoints[currentWaypointIndex].position;
         if (Vector2.Distance(waypointPos, transform.position) < .1f)
         {
@@ -60,6 +61,7 @@ public class Enemy : MonoBehaviour
         //Niveau 2: Detection joueur
         if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
         {
+            Debug.Log("Following player");
             Move(thePlayer.position);
         }
         else
