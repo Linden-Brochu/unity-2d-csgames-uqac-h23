@@ -1,3 +1,15 @@
+# Team AERONETS
+Linden Brochu (Jersey)
+William Dumoulin (Kuruk)
+Francois Lemaire (Balnian)
+
+
+Pas de packages externes
+
+
+
+
+
 # Bienvenue à la compétition de développement Jeu Vidéo pour CS Games 2023!
 
 Contexte: Les vagues battent contre les murs, les nuages sont lourds et obscurs, et tous regardent l’horizon avec peur. Quelle chose pourra nous retourner l’espoir…? Les jeux vidéo, bien sûr! et c’est votre responsabilité de les créer!
