@@ -6,35 +6,38 @@ using System.Linq;
 
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] public float movementSpeed;
+    [SerializeField] 
+    public float movementSpeed;
 
-    [SerializeField] Transform thePlayer;
+    [SerializeField] 
+    Transform thePlayer;
+    
+    [SerializeField] 
+    private GameObject GameObjectWithWaypoints;
+    
+    [SerializeField] 
+    private GameObject fieldOfViewCircle;
 
     private Transform[] waypoints;
-    [SerializeField] private GameObject GameObjectWithWaypoints;
-
     private float fieldOfViewRadius;
-    [SerializeField] private GameObject fieldOfViewCircle;
 
-    private float StartSearchingTime; //Not working yet
+    private float startSearchingTime;
 
     private int currentWaypointIndex = 0;
     private bool searchFinished = false;
 
-
     SpriteRenderer m_SpriteRenderer;
 
-    private float nearbyDistanceThresh =10;
+    private float nearbyDistanceThresh = 10;
     enum Status
     {
         Patrol,
         Follow,
         Search,
         FollowFromFriends
-        
     }
 
-    private Status actionStatus = Status.Patrol;
+    private Status actionStatus;
 
     void Start()
     {
@@ -48,15 +51,16 @@ public class Enemy : MonoBehaviour
         fieldOfViewRadius = fieldOfViewCircle.transform.localScale[0] / 2;
 
         m_SpriteRenderer = GetComponent<SpriteRenderer>();
-        m_SpriteRenderer.color = Color.green;
 
         EnemyManager.singleton.enemies.Add(this);
+        actionStatus = Status.Patrol;
     }
 
-    void Move(Vector2 targetPos)
+    void Move(Vector2 targetPosition)
     {
-        transform.position = Vector2.MoveTowards(transform.position, targetPos, Time.deltaTime * movementSpeed); 
+        transform.position = Vector2.MoveTowards(transform.position, targetPosition, Time.deltaTime * movementSpeed); 
     }
+
 
     void FollowWaypoints()
     {
@@ -64,43 +68,49 @@ public class Enemy : MonoBehaviour
         if (Vector2.Distance(waypointPos, transform.position) < .1f)
         {
             currentWaypointIndex = (currentWaypointIndex+1) % waypoints.Length;
-            //Debug.Log(currentWaypointIndex);
         }
-
         Move(waypointPos);
     }
 
 
-    void Search()
+    void SearchPlayer()
     {
-        //Fonction 1 : Tourne sur soi-même
+        //Spin searching for player
         float rotationSpeed = .1f;
         transform.Rotate(new Vector3(0, 0, rotationSpeed));
-        //Debug.Log("rotation = " + transform.rotation[2].ToString());
-
-
-        if (Time.time >= StartSearchingTime + 5f)
+        
+        if (Time.time >= startSearchingTime + 5f)
         {
-            // 5 secondes
-            //Debug.Log("Finished rotation");
             transform.rotation = Quaternion.Euler(0, 0, 0);
             searchFinished = true;
         }
-
-        //TODO Fonction 2: Tourne autour d'un point, (recherche plus visuelle)
     }
 
-
+    void Update()
+    {
+        if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
+        {
+            actionStatus = Status.Follow;
+        }
+        else if (actionStatus == Status.Follow){
+            //Enemy not following anymore
+            actionStatus = Status.Search;
+            startSearchingTime = Time.time;
+            searchFinished = false;
+        }
+        else if ((actionStatus == Status.Search && searchFinished) || actionStatus == Status.FollowFromFriends)
+        {
+            actionStatus = Status.Patrol;
+        }
+    }
     
     private void LateUpdate()
     {
-
-        //Check if other sees player
+        //Check if another enemy sees/follow player
         if (EnemyManager.singleton.enemies.Any(enemy => enemy.actionStatus == Status.Follow 
             && Vector2.Distance(transform.position, enemy.transform.position) < nearbyDistanceThresh)
             && actionStatus != Status.Follow)
         {
-            Debug.Log("FOLLOW FROM FRIENDS");
             actionStatus = Status.FollowFromFriends;
         }
 
@@ -115,7 +125,7 @@ public class Enemy : MonoBehaviour
                 m_SpriteRenderer.color = Color.red;
                 break;
             case Status.Search:
-                Search();
+                SearchPlayer();
                 m_SpriteRenderer.color = Color.blue;
                 break;
             case Status.FollowFromFriends:
@@ -125,32 +135,4 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
-        {
-            //Debug.Log("Follow"); 
-            actionStatus = Status.Follow;
-        }
-        else
-        {
-            if (actionStatus == Status.Follow){
-                //Debug.Log("Start Search");
-                actionStatus = Status.Search;
-                StartSearchingTime = Time.time;
-                searchFinished = false;
-            }
-            else
-            {
-                if ((actionStatus == Status.Search && searchFinished) || actionStatus == Status.FollowFromFriends)
-                {
-                    //Debug.Log("Patrolling");
-                    actionStatus = Status.Patrol;
-                }
-            } 
-            
-            
-        }
-
-    }
 }
