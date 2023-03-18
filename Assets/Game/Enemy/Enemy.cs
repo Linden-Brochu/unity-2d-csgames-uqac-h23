@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,13 +21,17 @@ public class Enemy : MonoBehaviour
     private int currentWaypointIndex = 0;
     private bool searchFinished = false;
 
+
     SpriteRenderer m_SpriteRenderer;
 
+    private float nearbyDistanceThresh =10;
     enum Status
     {
         Patrol,
         Follow,
-        Search
+        Search,
+        FollowFromFriends
+        
     }
 
     private Status actionStatus = Status.Patrol;
@@ -45,6 +50,7 @@ public class Enemy : MonoBehaviour
         m_SpriteRenderer = GetComponent<SpriteRenderer>();
         m_SpriteRenderer.color = Color.green;
 
+        EnemyManager.singleton.enemies.Add(this);
     }
 
     void Move(Vector2 targetPos)
@@ -52,7 +58,7 @@ public class Enemy : MonoBehaviour
         transform.position = Vector2.MoveTowards(transform.position, targetPos, Time.deltaTime * movementSpeed); 
     }
 
-    void followWaypoints()
+    void FollowWaypoints()
     {
         Vector3 waypointPos = waypoints[currentWaypointIndex].position;
         if (Vector2.Distance(waypointPos, transform.position) < .1f)
@@ -65,7 +71,7 @@ public class Enemy : MonoBehaviour
     }
 
 
-    void search()
+    void Search()
     {
         //Fonction 1 : Tourne sur soi-même
         float rotationSpeed = .1f;
@@ -83,30 +89,44 @@ public class Enemy : MonoBehaviour
 
         //TODO Fonction 2: Tourne autour d'un point, (recherche plus visuelle)
     }
+
+
     
+    private void LateUpdate()
+    {
 
+        //Check if other sees player
+        if (EnemyManager.singleton.enemies.Any(enemy => enemy.actionStatus == Status.Follow 
+            && Vector2.Distance(transform.position, enemy.transform.position) < nearbyDistanceThresh)
+            && actionStatus != Status.Follow)
+        {
+            Debug.Log("FOLLOW FROM FRIENDS");
+            actionStatus = Status.FollowFromFriends;
+        }
 
+        switch (actionStatus)
+        {
+            case Status.Patrol:
+                FollowWaypoints();
+                m_SpriteRenderer.color = Color.green;
+                break;
+            case Status.Follow:
+                Move(thePlayer.position);
+                m_SpriteRenderer.color = Color.red;
+                break;
+            case Status.Search:
+                Search();
+                m_SpriteRenderer.color = Color.blue;
+                break;
+            case Status.FollowFromFriends:
+                Move(thePlayer.position);
+                m_SpriteRenderer.color = Color.yellow;
+                break;
+        }
+    }
 
-    // Update is called once per frame
     void Update()
     {
-        //Niveau 1: suivi d'une trajectoire
-        //followWaypoints();
-
-        //Niveau 2: Detection joueur
-        //if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
-        //{
-        //    Debug.Log("Following player");
-        //    Move(thePlayer.position);
-        //}
-        //else
-        //{
-        //    followWaypoints();
-        //}
-
-        //Niveau 3
-
-
         if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
         {
             //Debug.Log("Follow"); 
@@ -122,31 +142,15 @@ public class Enemy : MonoBehaviour
             }
             else
             {
-                if (actionStatus == Status.Search && searchFinished) {
+                if ((actionStatus == Status.Search && searchFinished) || actionStatus == Status.FollowFromFriends)
+                {
                     //Debug.Log("Patrolling");
                     actionStatus = Status.Patrol;
                 }
             } 
             
+            
         }
 
-
-
-        switch(actionStatus)
-        {
-            case Status.Patrol:
-                followWaypoints();
-                m_SpriteRenderer.color = Color.green;
-                break;
-            case Status.Follow:
-                Move(thePlayer.position);
-                m_SpriteRenderer.color = Color.red;
-                break;
-            case Status.Search:
-                search();
-                m_SpriteRenderer.color = Color.blue;
-                break;
-        }
-        
     }
 }
