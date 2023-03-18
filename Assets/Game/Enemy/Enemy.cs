@@ -15,10 +15,13 @@ public class Enemy : MonoBehaviour
     private float fieldOfViewRadius;
     [SerializeField] private GameObject fieldOfViewCircle;
 
-    Time StartSearchingTime; //Not working yet
+    private float StartSearchingTime; //Not working yet
 
     private int currentWaypointIndex = 0;
     private bool searchFinished = false;
+
+    SpriteRenderer m_SpriteRenderer;
+
     enum Status
     {
         Patrol,
@@ -38,6 +41,10 @@ public class Enemy : MonoBehaviour
 
         //Get field of view radius from size in unity
         fieldOfViewRadius = fieldOfViewCircle.transform.localScale[0] / 2;
+
+        m_SpriteRenderer = GetComponent<SpriteRenderer>();
+        m_SpriteRenderer.color = Color.green;
+
     }
 
     void Move(Vector2 targetPos)
@@ -60,17 +67,21 @@ public class Enemy : MonoBehaviour
 
     void search()
     {
-        float rotationSpeed = 1f;
-        transform.Rotate(new Vector3(0, 0, transform.rotation[2] + rotationSpeed));
+        //Fonction 1 : Tourne sur soi-même
+        float rotationSpeed = .1f;
+        transform.Rotate(new Vector3(0, 0, rotationSpeed));
         //Debug.Log("rotation = " + transform.rotation[2].ToString());
 
-        if(true/*Time.time - StartSearchingTime > 5*/)
+
+        if (Time.time >= StartSearchingTime + 5f)
         {
             // 5 secondes
-            Debug.Log("Finished rotation");
-            transform.Rotate(new Vector3(0, 0, 0)); //Reset rotation
+            //Debug.Log("Finished rotation");
+            transform.rotation = Quaternion.Euler(0, 0, 0);
             searchFinished = true;
         }
+
+        //TODO Fonction 2: Tourne autour d'un point, (recherche plus visuelle)
     }
     
 
@@ -98,22 +109,22 @@ public class Enemy : MonoBehaviour
 
         if (Vector2.Distance(transform.position, thePlayer.position) < fieldOfViewRadius)
         {
+            //Debug.Log("Follow"); 
             actionStatus = Status.Follow;
-            Debug.Log("Follow");
         }
         else
         {
             if (actionStatus == Status.Follow){
+                //Debug.Log("Start Search");
                 actionStatus = Status.Search;
-                Debug.Log("Start Search");
-                //StartSearchingTime = Time.time;
+                StartSearchingTime = Time.time;
                 searchFinished = false;
             }
             else
             {
                 if (actionStatus == Status.Search && searchFinished) {
+                    //Debug.Log("Patrolling");
                     actionStatus = Status.Patrol;
-                    Debug.Log("Patrolling");
                 }
             } 
             
@@ -125,13 +136,15 @@ public class Enemy : MonoBehaviour
         {
             case Status.Patrol:
                 followWaypoints();
+                m_SpriteRenderer.color = Color.green;
                 break;
             case Status.Follow:
                 Move(thePlayer.position);
+                m_SpriteRenderer.color = Color.red;
                 break;
             case Status.Search:
-                //tourne sur lui même
                 search();
+                m_SpriteRenderer.color = Color.blue;
                 break;
         }
         
