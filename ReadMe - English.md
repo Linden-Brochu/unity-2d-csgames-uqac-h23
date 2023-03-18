@@ -1,4 +1,9 @@
 ﻿﻿
+# TEAM: AERONETS
+
+ 
+ 
+ 
  # Welcome to the Game Dev competition for CSgames 2023!
 
 Context: the waves crash against wall, the clouds are heavy and dark, and everyone looks at the horizion with fear. What could return hope to us...? Video Games, of course! and its your responsibility to create them!
